@@ -1,0 +1,38 @@
+{
+    "sourceFile": "package.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1759819093724,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1759819244411,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,7 +2,7 @@\n   \"name\": \"browserhistory\",\n   \"version\": \"1.0.0\",\n   \"type\": \"module\",\n   \"dependencies\": {\n-    \"@google/genai\": \"^1.22.0\"\n+    \"@google/genai\": \"^Latest\",\n   }\n }\n"
+                },
+                {
+                    "date": 1759819690409,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,8 @@\n {\n   \"name\": \"browserhistory\",\n   \"version\": \"1.0.0\",\n-  \"type\": \"module\",\n+  \"type\": \"gemini\",\n   \"dependencies\": {\n     \"@google/genai\": \"^Latest\",\n   }\n }\n"
+                },
+                {
+                    "date": 1759819714558,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,8 +1,16 @@\n {\n   \"name\": \"browserhistory\",\n   \"version\": \"1.0.0\",\n-  \"type\": \"gemini\",\n+  \"description\": \"\",\n+  \"main\": \"index.js\",\n+  \"type\": \"module\",  <-- 在这里添加\n+  \"scripts\": {\n+    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\n+  },\n+  \"keywords\": [],\n+  \"author\": \"\",\n+  \"license\": \"ISC\",\n   \"dependencies\": {\n-    \"@google/genai\": \"^Latest\",\n+    \"@google/genai\": \"^latest\"\n   }\n-}\n+}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1759819747715,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n   \"name\": \"browserhistory\",\n   \"version\": \"1.0.0\",\n   \"description\": \"\",\n   \"main\": \"index.js\",\n-  \"type\": \"module\",  <-- 在这里添加\n+  \"type\": \"gemini-2.5-flash\",\n   \"scripts\": {\n     \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\n   },\n   \"keywords\": [],\n"
+                },
+                {
+                    "date": 1759820304738,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,7 +10,6 @@\n   \"keywords\": [],\n   \"author\": \"\",\n   \"license\": \"ISC\",\n   \"dependencies\": {\n-    \"@google/genai\": \"^latest\"\n   }\n }\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1759819093724,
+            "name": "Commit-0",
+            "content": "{\n  \"name\": \"browserhistory\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@google/genai\": \"^1.22.0\"\n  }\n}\n"
+        }
+    ]
+}
