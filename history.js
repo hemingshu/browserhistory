@@ -9,6 +9,7 @@ let sortFilter = 'time-desc';
 let viewMode = 'grid'; // 'grid' or 'list'
 let isAutoRefresh = true;
 let refreshInterval = null;
+let categoryFilter = 'all'; // 新增类别过滤
 
 // DOM元素
 const searchInput = document.getElementById('searchInput');
@@ -36,6 +37,9 @@ const confirmExportBtn = document.getElementById('confirmExport');
 const cancelExportBtn = document.getElementById('cancelExport');
 const settingsBtn = document.getElementById('settingsBtn');
 const helpBtn = document.getElementById('helpBtn');
+
+// 类别选项卡元素
+const categoryTabs = document.querySelectorAll('.category-tab');
 
 // 统计元素
 const totalCountEl = document.getElementById('totalCount');
@@ -84,6 +88,14 @@ function initializeEventListeners() {
     // 视图模式
     gridViewBtn.addEventListener('click', () => setViewMode('grid'));
     listViewBtn.addEventListener('click', () => setViewMode('list'));
+    
+    // 类别选项卡
+    categoryTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            setCategoryFilter(category);
+        });
+    });
     
     // 操作按钮
     refreshBtn.addEventListener('click', loadHistory);
@@ -203,7 +215,8 @@ async function loadHistory() {
             visitCount: item.visitCount || 1,
             lastVisitTime: item.lastVisitTime,
             starred: false,
-            tags: []
+            tags: [],
+            category: categorizeUrl(item.url, item.title || '无标题')
         }));
         
         // 从存储中加载用户标记
@@ -221,6 +234,129 @@ async function loadHistory() {
         showError('加载历史记录失败: ' + error.message);
         hideLoading();
     }
+}
+
+// 类别识别函数
+function categorizeUrl(url, title) {
+    const urlLower = url.toLowerCase();
+    const titleLower = title.toLowerCase();
+    
+    // 工作相关
+    if (urlLower.includes('linkedin.com') || 
+        urlLower.includes('github.com') || 
+        urlLower.includes('stackoverflow.com') ||
+        urlLower.includes('jira.') ||
+        urlLower.includes('confluence.') ||
+        urlLower.includes('slack.com') ||
+        urlLower.includes('teams.microsoft.com') ||
+        urlLower.includes('zoom.us') ||
+        urlLower.includes('meet.google.com') ||
+        titleLower.includes('工作') ||
+        titleLower.includes('项目') ||
+        titleLower.includes('会议') ||
+        titleLower.includes('office') ||
+        titleLower.includes('work')) {
+        return 'work';
+    }
+    
+    // 娱乐相关
+    if (urlLower.includes('youtube.com') ||
+        urlLower.includes('netflix.com') ||
+        urlLower.includes('bilibili.com') ||
+        urlLower.includes('iqiyi.com') ||
+        urlLower.includes('youku.com') ||
+        urlLower.includes('twitch.tv') ||
+        urlLower.includes('steam.com') ||
+        urlLower.includes('epicgames.com') ||
+        urlLower.includes('playstation.com') ||
+        urlLower.includes('xbox.com') ||
+        titleLower.includes('游戏') ||
+        titleLower.includes('电影') ||
+        titleLower.includes('视频') ||
+        titleLower.includes('娱乐') ||
+        titleLower.includes('music') ||
+        titleLower.includes('game')) {
+        return 'entertainment';
+    }
+    
+    // 购物相关
+    if (urlLower.includes('taobao.com') ||
+        urlLower.includes('tmall.com') ||
+        urlLower.includes('jd.com') ||
+        urlLower.includes('amazon.com') ||
+        urlLower.includes('ebay.com') ||
+        urlLower.includes('alibaba.com') ||
+        urlLower.includes('shopify.com') ||
+        urlLower.includes('shopee.') ||
+        urlLower.includes('lazada.') ||
+        titleLower.includes('购物') ||
+        titleLower.includes('商城') ||
+        titleLower.includes('商店') ||
+        titleLower.includes('购买') ||
+        titleLower.includes('shop') ||
+        titleLower.includes('buy')) {
+        return 'shopping';
+    }
+    
+    // 资讯相关
+    if (urlLower.includes('news.') ||
+        urlLower.includes('cnn.com') ||
+        urlLower.includes('bbc.com') ||
+        urlLower.includes('reuters.com') ||
+        urlLower.includes('sina.com.cn') ||
+        urlLower.includes('sohu.com') ||
+        urlLower.includes('163.com') ||
+        urlLower.includes('qq.com') ||
+        urlLower.includes('zhihu.com') ||
+        urlLower.includes('reddit.com') ||
+        titleLower.includes('新闻') ||
+        titleLower.includes('资讯') ||
+        titleLower.includes('头条') ||
+        titleLower.includes('news') ||
+        titleLower.includes('article')) {
+        return 'news';
+    }
+    
+    // 社交相关
+    if (urlLower.includes('facebook.com') ||
+        urlLower.includes('twitter.com') ||
+        urlLower.includes('instagram.com') ||
+        urlLower.includes('weibo.com') ||
+        urlLower.includes('douyin.com') ||
+        urlLower.includes('tiktok.com') ||
+        urlLower.includes('discord.com') ||
+        urlLower.includes('telegram.org') ||
+        urlLower.includes('whatsapp.com') ||
+        titleLower.includes('社交') ||
+        titleLower.includes('朋友圈') ||
+        titleLower.includes('微博') ||
+        titleLower.includes('social') ||
+        titleLower.includes('chat')) {
+        return 'social';
+    }
+    
+    // 鉴权相关
+    if (urlLower.includes('login') ||
+        urlLower.includes('signin') ||
+        urlLower.includes('auth') ||
+        urlLower.includes('oauth') ||
+        urlLower.includes('sso') ||
+        urlLower.includes('passport') ||
+        urlLower.includes('account') ||
+        urlLower.includes('profile') ||
+        urlLower.includes('settings') ||
+        urlLower.includes('admin') ||
+        titleLower.includes('登录') ||
+        titleLower.includes('注册') ||
+        titleLower.includes('账户') ||
+        titleLower.includes('设置') ||
+        titleLower.includes('管理') ||
+        titleLower.includes('login') ||
+        titleLower.includes('signin')) {
+        return 'auth';
+    }
+    
+    return 'other';
 }
 
 // 从存储中加载用户标记
@@ -259,6 +395,21 @@ async function saveUserMarks() {
     }
 }
 
+// 设置类别过滤
+function setCategoryFilter(category) {
+    categoryFilter = category;
+    
+    // 更新选项卡状态
+    categoryTabs.forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-category') === category) {
+            tab.classList.add('active');
+        }
+    });
+    
+    applyFilters();
+}
+
 // 更新统计信息
 function updateStats() {
     const total = currentHistory.length;
@@ -270,6 +421,27 @@ function updateStats() {
     totalCountEl.textContent = total.toLocaleString();
     starredCountEl.textContent = starred.toLocaleString();
     todayCountEl.textContent = todayCount.toLocaleString();
+    
+    // 更新类别统计
+    updateCategoryStats();
+}
+
+// 更新类别统计
+function updateCategoryStats() {
+    const categories = ['all', 'work', 'entertainment', 'shopping', 'news', 'social', 'auth'];
+    
+    categories.forEach(category => {
+        const countEl = document.getElementById(category + 'Count');
+        if (countEl) {
+            let count = 0;
+            if (category === 'all') {
+                count = currentHistory.length;
+            } else {
+                count = currentHistory.filter(item => item.category === category).length;
+            }
+            countEl.textContent = count.toLocaleString();
+        }
+    });
 }
 
 // 应用过滤条件
@@ -281,6 +453,13 @@ function applyFilters() {
             const matchesTitle = item.title.toLowerCase().includes(query);
             const matchesUrl = item.url.toLowerCase().includes(query);
             if (!matchesTitle && !matchesUrl) {
+                return false;
+            }
+        }
+        
+        // 类别过滤
+        if (categoryFilter !== 'all') {
+            if (item.category !== categoryFilter) {
                 return false;
             }
         }
@@ -399,8 +578,32 @@ function createHistoryItemHTML(item) {
     const timeString = formatTime(visitTime);
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(item.url).hostname}&sz=16`;
     
+    // 类别图标映射
+    const categoryIcons = {
+        'work': '💼',
+        'entertainment': '🎮',
+        'shopping': '🛒',
+        'news': '📰',
+        'social': '👥',
+        'auth': '🔐',
+        'other': '📄'
+    };
+    
+    const categoryNames = {
+        'work': '工作',
+        'entertainment': '娱乐',
+        'shopping': '购物',
+        'news': '资讯',
+        'social': '社交',
+        'auth': '鉴权',
+        'other': '其他'
+    };
+    
+    const categoryIcon = categoryIcons[item.category] || '📄';
+    const categoryName = categoryNames[item.category] || '其他';
+    
     return `
-        <div class="history-item" data-id="${item.id}">
+        <div class="history-item" data-id="${item.id}" data-category="${item.category}">
             <div class="history-item-header">
                 <a href="${item.url}" class="history-title" target="_blank" title="${item.title}">
                     ${viewMode === 'grid' ? `<img src="${faviconUrl}" alt="" class="favicon" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle;">` : ''}
@@ -420,6 +623,9 @@ function createHistoryItemHTML(item) {
             <div class="history-meta">
                 <span class="history-time">${timeString}</span>
                 <span>访问 ${item.visitCount} 次</span>
+                <span class="history-category" title="类别: ${categoryName}">
+                    ${categoryIcon} ${categoryName}
+                </span>
                 ${item.tags.length > 0 ? `<div class="history-tags">${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
             </div>
         </div>

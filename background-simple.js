@@ -90,3 +90,4 @@ async function handleClearAllHistory(request, sendResponse) {
         sendResponse({ success: false, error: error.message });
     }
 }
+
