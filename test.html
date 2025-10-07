@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扩展测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser History Manager 扩展测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 检查扩展是否加载</h2>
+        <button class="test-button" onclick="checkExtension()">检查扩展状态</button>
+        <div id="extensionResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 测试Chrome History API</h2>
+        <button class="test-button" onclick="testHistoryAPI()">测试历史记录API</button>
+        <div id="historyResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 测试Chrome Storage API</h2>
+        <button class="test-button" onclick="testStorageAPI()">测试存储API</button>
+        <div id="storageResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 测试打开历史记录页面</h2>
+        <button class="test-button" onclick="openHistoryPage()">打开历史记录页面</button>
+        <div id="pageResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. 测试消息传递</h2>
+        <button class="test-button" onclick="testMessagePassing()">测试与Background通信</button>
+        <div id="messageResult" class="result"></div>
+    </div>
+
+    <script>
+        function checkExtension() {
+            const result = document.getElementById('extensionResult');
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                result.innerHTML = '✅ Chrome扩展API可用<br>';
+                result.innerHTML += `扩展ID: ${chrome.runtime.id}<br>`;
+                result.innerHTML += `扩展URL: ${chrome.runtime.getURL('')}<br>`;
+                result.className = 'result success';
+            } else {
+                result.innerHTML = '❌ Chrome扩展API不可用';
+                result.className = 'result error';
+            }
+        }
+        
+        async function testHistoryAPI() {
+            const result = document.getElementById('historyResult');
+            result.innerHTML = '测试中...';
+            result.className = 'result';
+            
+            try {
+                if (typeof chrome === 'undefined' || !chrome.history) {
+                    throw new Error('Chrome History API 不可用');
+                }
+                
+                const history = await chrome.history.search({
+                    text: '',
+                    maxResults: 5,
+                    startTime: 0
+                });
+                
+                result.innerHTML = `✅ 历史记录API正常<br>获取到 ${history.length} 条记录<br>`;
+                result.innerHTML += `示例记录: ${history[0]?.title || '无记录'}`;
+                result.className = 'result success';
+            } catch (error) {
+                result.innerHTML = `❌ 历史记录API错误: ${error.message}`;
+                result.className = 'result error';
+            }
+        }
+        
+        async function testStorageAPI() {
+            const result = document.getElementById('storageResult');
+            result.innerHTML = '测试中...';
+            result.className = 'result';
+            
+            try {
+                if (typeof chrome === 'undefined' || !chrome.storage) {
+                    throw new Error('Chrome Storage API 不可用');
+                }
+                
+                // 测试写入
+                await chrome.storage.local.set({ testKey: 'testValue' });
+                
+                // 测试读取
+                const data = await chrome.storage.local.get(['testKey']);
+                
+                if (data.testKey === 'testValue') {
+                    result.innerHTML = '✅ 存储API正常<br>读写测试通过';
+                    result.className = 'result success';
+                } else {
+                    throw new Error('存储数据不匹配');
+                }
+            } catch (error) {
+                result.innerHTML = `❌ 存储API错误: ${error.message}`;
+                result.className = 'result error';
+            }
+        }
+        
+        function openHistoryPage() {
+            const result = document.getElementById('pageResult');
+            
+            try {
+                if (typeof chrome === 'undefined' || !chrome.tabs) {
+                    throw new Error('Chrome Tabs API 不可用');
+                }
+                
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL('history.html')
+                });
+                
+                result.innerHTML = '✅ 正在打开历史记录页面...';
+                result.className = 'result success';
+            } catch (error) {
+                result.innerHTML = `❌ 打开页面失败: ${error.message}`;
+                result.className = 'result error';
+            }
+        }
+        
+        async function testMessagePassing() {
+            const result = document.getElementById('messageResult');
+            result.innerHTML = '测试中...';
+            result.className = 'result';
+            
+            try {
+                if (typeof chrome === 'undefined' || !chrome.runtime) {
+                    throw new Error('Chrome Runtime API 不可用');
+                }
+                
+                const response = await chrome.runtime.sendMessage({
+                    type: 'GET_HISTORY',
+                    query: '',
+                    maxResults: 3
+                });
+                
+                if (response.success) {
+                    result.innerHTML = `✅ 消息传递正常<br>Background Script响应: 获取到 ${response.data.length} 条记录`;
+                    result.className = 'result success';
+                } else {
+                    throw new Error(response.error || '未知错误');
+                }
+            } catch (error) {
+                result.innerHTML = `❌ 消息传递失败: ${error.message}`;
+                result.className = 'result error';
+            }
+        }
+        
+        // 页面加载时自动检查扩展
+        window.addEventListener('load', checkExtension);
+    </script>
+</body>
+</html>

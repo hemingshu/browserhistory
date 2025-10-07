@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser History Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>浏览历史记录</h1>
+            <div class="controls">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="搜索历史记录..." />
+                    <button id="searchBtn">搜索</button>
+                </div>
+                <div class="filter-container">
+                    <select id="dateFilter">
+                        <option value="all">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <button id="refreshBtn" class="btn btn-primary">刷新</button>
+            <button id="exportBtn" class="btn btn-secondary">导出</button>
+            <button id="clearAllBtn" class="btn btn-danger">清空全部</button>
+        </div>
+
+        <div class="history-container">
+            <div id="loadingIndicator" class="loading">加载中...</div>
+            <div id="historyList" class="history-list"></div>
+            <div id="noResults" class="no-results" style="display: none;">
+                没有找到匹配的历史记录
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button id="prevPage" class="btn btn-secondary" disabled>上一页</button>
+            <span id="pageInfo">第 1 页</span>
+            <button id="nextPage" class="btn btn-secondary" disabled>下一页</button>
+        </div>
+    </div>
+
+    <!-- 导出选项模态框 -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>导出历史记录</h3>
+            <div class="export-options">
+                <label>
+                    <input type="radio" name="exportFormat" value="csv" checked>
+                    CSV格式
+                </label>
+                <label>
+                    <input type="radio" name="exportFormat" value="json">
+                    JSON格式
+                </label>
+            </div>
+            <div class="export-actions">
+                <button id="confirmExport" class="btn btn-primary">确认导出</button>
+                <button id="cancelExport" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
+

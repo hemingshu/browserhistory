@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas32" width="32" height="32"></canvas>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+    
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = size * 0.4;
+            
+            // 背景圆形
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 白色边框
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = size * 0.03;
+            ctx.stroke();
+            
+            // 时钟圆圈
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = size * 0.02;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.55, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // 时针
+            ctx.lineWidth = size * 0.02;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX, centerY - radius * 0.3);
+            ctx.stroke();
+            
+            // 分针
+            ctx.lineWidth = size * 0.015;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + radius * 0.25, centerY);
+            ctx.stroke();
+            
+            // 历史记录线条
+            ctx.lineWidth = size * 0.015;
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius * 0.5, centerY + radius * 0.4);
+            ctx.quadraticCurveTo(centerX - radius * 0.2, centerY + radius * 0.2, centerX - radius * 0.05, centerY + radius * 0.3);
+            ctx.quadraticCurveTo(centerX + radius * 0.1, centerY + radius * 0.5, centerX + radius * 0.4, centerY + radius * 0.2);
+            ctx.quadraticCurveTo(centerX + radius * 0.6, centerY - radius * 0.1, centerX + radius * 0.5, centerY - radius * 0.3);
+            ctx.stroke();
+            
+            // 时间点
+            const pointSize = size * 0.02;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(centerX - radius * 0.5, centerY + radius * 0.4, pointSize, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX - radius * 0.05, centerY + radius * 0.3, pointSize, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX + radius * 0.4, centerY + radius * 0.2, pointSize, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX + radius * 0.5, centerY - radius * 0.3, pointSize, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        // 生成不同尺寸的图标
+        const sizes = [16, 32, 48, 128];
+        sizes.forEach(size => {
+            const canvas = document.getElementById(`canvas${size}`);
+            drawIcon(canvas, size);
+            
+            // 下载PNG
+            const link = document.createElement('a');
+            link.download = `icon${size}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser History Manager - 浏览历史记录</title>
+    <link rel="stylesheet" href="history-styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部导航 -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">
+                        <span class="icon">🕒</span>
+                        浏览历史记录管理器
+                    </h1>
+                </div>
+                <div class="header-right">
+                    <button id="refreshBtn" class="btn btn-primary">
+                        <span class="btn-icon">🔄</span>
+                        刷新
+                    </button>
+                    <button id="exportBtn" class="btn btn-secondary">
+                        <span class="btn-icon">📤</span>
+                        导出
+                    </button>
+                    <button id="clearAllBtn" class="btn btn-danger">
+                        <span class="btn-icon">🗑️</span>
+                        清空全部
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 搜索和过滤区域 -->
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索历史记录..." class="search-input" />
+                    <button id="searchBtn" class="search-btn">
+                        <span class="search-icon">🔍</span>
+                    </button>
+                </div>
+                <div class="filter-container">
+                    <select id="dateFilter" class="filter-select">
+                        <option value="all">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                        <option value="year">今年</option>
+                    </select>
+                    <select id="sortFilter" class="filter-select">
+                        <option value="time-desc">按时间倒序</option>
+                        <option value="time-asc">按时间正序</option>
+                        <option value="title-asc">按标题A-Z</option>
+                        <option value="title-desc">按标题Z-A</option>
+                        <option value="visits-desc">按访问次数</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="stats-section">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalCount">0</span>
+                    <span class="stat-label">总记录数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="filteredCount">0</span>
+                    <span class="stat-label">筛选结果</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="starredCount">0</span>
+                    <span class="stat-label">重要标记</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="todayCount">0</span>
+                    <span class="stat-label">今日访问</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录列表 -->
+        <main class="main-content">
+            <div class="content-header">
+                <div class="content-title">
+                    <h2>历史记录列表</h2>
+                    <span class="record-count" id="recordCount">显示 0 条记录</span>
+                </div>
+                <div class="view-options">
+                    <button id="gridViewBtn" class="view-btn active" title="网格视图">
+                        <span>⊞</span>
+                    </button>
+                    <button id="listViewBtn" class="view-btn" title="列表视图">
+                        <span>☰</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-container">
+                <div id="loadingIndicator" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在加载历史记录...</p>
+                </div>
+                
+                <div id="historyList" class="history-list"></div>
+                
+                <div id="noResults" class="no-results" style="display: none;">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>没有找到匹配的历史记录</h3>
+                    <p>尝试调整搜索条件或过滤选项</p>
+                </div>
+            </div>
+
+            <!-- 分页控件 -->
+            <div class="pagination-section">
+                <div class="pagination-info">
+                    <span id="pageInfo">第 1 页，共 1 页</span>
+                </div>
+                <div class="pagination-controls">
+                    <button id="firstPage" class="btn btn-secondary" disabled>首页</button>
+                    <button id="prevPage" class="btn btn-secondary" disabled>上一页</button>
+                    <div class="page-numbers" id="pageNumbers"></div>
+                    <button id="nextPage" class="btn btn-secondary" disabled>下一页</button>
+                    <button id="lastPage" class="btn btn-secondary" disabled>末页</button>
+                </div>
+                <div class="pagination-size">
+                    <label for="pageSize">每页显示：</label>
+                    <select id="pageSize" class="page-size-select">
+                        <option value="10">10条</option>
+                        <option value="20" selected>20条</option>
+                        <option value="50">50条</option>
+                        <option value="100">100条</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部信息 -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <p>Browser History Manager v1.0.0 | 管理您的浏览历史记录</p>
+                <div class="footer-links">
+                    <button id="settingsBtn" class="footer-link">设置</button>
+                    <button id="helpBtn" class="footer-link">帮助</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 导出选项模态框 -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>导出历史记录</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <div class="option-group">
+                        <label class="option-label">导出格式</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="exportFormat" value="csv" checked>
+                                <span class="radio-text">CSV格式 (Excel兼容)</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="exportFormat" value="json">
+                                <span class="radio-text">JSON格式 (程序兼容)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label class="option-label">导出范围</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="exportRange" value="filtered" checked>
+                                <span class="radio-text">当前筛选结果</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="exportRange" value="all">
+                                <span class="radio-text">全部历史记录</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmExport" class="btn btn-primary">确认导出</button>
+                <button id="cancelExport" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>设置</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <label class="setting-label">
+                        <input type="checkbox" id="autoRefresh" checked>
+                        自动刷新历史记录
+                    </label>
+                    <label class="setting-label">
+                        <input type="checkbox" id="showVisits" checked>
+                        显示访问次数
+                    </label>
+                    <label class="setting-label">
+                        <input type="checkbox" id="showFavicon" checked>
+                        显示网站图标
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettings" class="btn btn-primary">保存设置</button>
+                <button id="cancelSettings" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="history.js"></script>
+</body>
+</html>
