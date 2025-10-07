@@ -22,6 +22,10 @@
                         <span class="btn-icon">🔄</span>
                         刷新
                     </button>
+                    <button id="exportTitlesBtn" class="btn btn-secondary">
+                        <span class="btn-icon">📝</span>
+                        导出标题
+                    </button>
                     <button id="exportBtn" class="btn btn-secondary">
                         <span class="btn-icon">📤</span>
                         导出
@@ -260,6 +264,11 @@
                         <input type="checkbox" id="showFavicon" checked>
                         显示网站图标
                     </label>
+                    <div class="setting-field">
+                        <label for="geminiApiKey" class="setting-label-text">Gemini API Key（仅本机保存）</label>
+                        <input type="password" id="geminiApiKey" placeholder="请输入 Gemini API Key" class="input-text" />
+                        <div class="setting-hint">用于分类时在本机使用，扩展不会将密钥上传至任何服务器。</div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

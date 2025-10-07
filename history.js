@@ -18,6 +18,7 @@ const dateFilterSelect = document.getElementById('dateFilter');
 const sortFilterSelect = document.getElementById('sortFilter');
 const refreshBtn = document.getElementById('refreshBtn');
 const exportBtn = document.getElementById('exportBtn');
+const exportTitlesBtn = document.getElementById('exportTitlesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const historyList = document.getElementById('historyList');
 const loadingIndicator = document.getElementById('loadingIndicator');
@@ -37,6 +38,7 @@ const confirmExportBtn = document.getElementById('confirmExport');
 const cancelExportBtn = document.getElementById('cancelExport');
 const settingsBtn = document.getElementById('settingsBtn');
 const helpBtn = document.getElementById('helpBtn');
+const geminiApiKeyInput = document.getElementById('geminiApiKey');
 
 // 类别选项卡元素
 const categoryTabs = document.querySelectorAll('.category-tab');
@@ -100,6 +102,9 @@ function initializeEventListeners() {
     // 操作按钮
     refreshBtn.addEventListener('click', loadHistory);
     exportBtn.addEventListener('click', showExportModal);
+    if (exportTitlesBtn) {
+        exportTitlesBtn.addEventListener('click', exportTitlesJSON);
+    }
     clearAllBtn.addEventListener('click', clearAllHistory);
     
     // 分页
@@ -136,13 +141,16 @@ function initializeEventListeners() {
 // 加载设置
 async function loadSettings() {
     try {
-        const result = await chrome.storage.local.get(['historySettings']);
+        const result = await chrome.storage.local.get(['historySettings','geminiApiKey']);
         if (result.historySettings) {
             const settings = result.historySettings;
             isAutoRefresh = settings.autoRefresh !== false;
             document.getElementById('autoRefresh').checked = isAutoRefresh;
             document.getElementById('showVisits').checked = settings.showVisits !== false;
             document.getElementById('showFavicon').checked = settings.showFavicon !== false;
+        }
+        if (result.geminiApiKey && geminiApiKeyInput) {
+            geminiApiKeyInput.value = result.geminiApiKey;
         }
     } catch (error) {
         console.error('加载设置失败:', error);
@@ -157,7 +165,12 @@ async function saveSettings() {
             showVisits: document.getElementById('showVisits').checked,
             showFavicon: document.getElementById('showFavicon').checked
         };
-        await chrome.storage.local.set({ historySettings: settings });
+        const apiKey = geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '';
+        const toSave = { historySettings: settings };
+        if (apiKey) {
+            toSave.geminiApiKey = apiKey;
+        }
+        await chrome.storage.local.set(toSave);
         isAutoRefresh = settings.autoRefresh;
         if (isAutoRefresh) {
             startAutoRefresh();
@@ -824,6 +837,25 @@ function exportToJSON(data) {
     }));
     
     downloadFile(JSON.stringify(jsonData, null, 2), 'browser-history.json', 'application/json');
+}
+
+// 导出标题 JSON（用于离线到 Node 端分类）
+function exportTitlesJSON() {
+    try {
+        if (!currentHistory || currentHistory.length === 0) {
+            showMessage('暂无历史记录可导出', 'error');
+            return;
+        }
+        const titles = filteredHistory && filteredHistory.length > 0
+            ? filteredHistory.map(i => i.title)
+            : currentHistory.map(i => i.title);
+        const content = JSON.stringify(titles, null, 2);
+        downloadFile(content, 'history-titles.json', 'application/json');
+        showMessage('已导出标题列表', 'success');
+    } catch (error) {
+        console.error('导出标题失败:', error);
+        showMessage('导出标题失败', 'error');
+    }
 }
 
 function downloadFile(content, filename, mimeType) {
