@@ -7,7 +7,7 @@ let searchQuery = '';
 let dateFilter = 'all';
 let sortFilter = 'time-desc';
 let viewMode = 'grid'; // 'grid' or 'list'
-let isAutoRefresh = true;
+let isAutoRefresh = false;
 let refreshInterval = null;
 let categoryFilter = 'all'; // 新增类别过滤
 
@@ -285,121 +285,6 @@ function categorizeUrl(url, title) {
     const urlLower = url.toLowerCase();
     const titleLower = title.toLowerCase();
     
-    // 工作相关
-    if (urlLower.includes('linkedin.com') || 
-        urlLower.includes('github.com') || 
-        urlLower.includes('stackoverflow.com') ||
-        urlLower.includes('jira.') ||
-        urlLower.includes('confluence.') ||
-        urlLower.includes('slack.com') ||
-        urlLower.includes('teams.microsoft.com') ||
-        urlLower.includes('zoom.us') ||
-        urlLower.includes('meet.google.com') ||
-        titleLower.includes('工作') ||
-        titleLower.includes('项目') ||
-        titleLower.includes('会议') ||
-        titleLower.includes('office') ||
-        titleLower.includes('work')) {
-        return 'work';
-    }
-    
-    // 娱乐相关
-    if (urlLower.includes('youtube.com') ||
-        urlLower.includes('netflix.com') ||
-        urlLower.includes('bilibili.com') ||
-        urlLower.includes('iqiyi.com') ||
-        urlLower.includes('youku.com') ||
-        urlLower.includes('twitch.tv') ||
-        urlLower.includes('steam.com') ||
-        urlLower.includes('epicgames.com') ||
-        urlLower.includes('playstation.com') ||
-        urlLower.includes('xbox.com') ||
-        titleLower.includes('游戏') ||
-        titleLower.includes('电影') ||
-        titleLower.includes('视频') ||
-        titleLower.includes('娱乐') ||
-        titleLower.includes('music') ||
-        titleLower.includes('game')) {
-        return 'entertainment';
-    }
-    
-    // 购物相关
-    if (urlLower.includes('taobao.com') ||
-        urlLower.includes('tmall.com') ||
-        urlLower.includes('jd.com') ||
-        urlLower.includes('amazon.com') ||
-        urlLower.includes('ebay.com') ||
-        urlLower.includes('alibaba.com') ||
-        urlLower.includes('shopify.com') ||
-        urlLower.includes('shopee.') ||
-        urlLower.includes('lazada.') ||
-        titleLower.includes('购物') ||
-        titleLower.includes('商城') ||
-        titleLower.includes('商店') ||
-        titleLower.includes('购买') ||
-        titleLower.includes('shop') ||
-        titleLower.includes('buy')) {
-        return 'shopping';
-    }
-    
-    // 资讯相关
-    if (urlLower.includes('news.') ||
-        urlLower.includes('cnn.com') ||
-        urlLower.includes('bbc.com') ||
-        urlLower.includes('reuters.com') ||
-        urlLower.includes('sina.com.cn') ||
-        urlLower.includes('sohu.com') ||
-        urlLower.includes('163.com') ||
-        urlLower.includes('qq.com') ||
-        urlLower.includes('zhihu.com') ||
-        urlLower.includes('reddit.com') ||
-        titleLower.includes('新闻') ||
-        titleLower.includes('资讯') ||
-        titleLower.includes('头条') ||
-        titleLower.includes('news') ||
-        titleLower.includes('article')) {
-        return 'news';
-    }
-    
-    // 社交相关
-    if (urlLower.includes('facebook.com') ||
-        urlLower.includes('twitter.com') ||
-        urlLower.includes('instagram.com') ||
-        urlLower.includes('weibo.com') ||
-        urlLower.includes('douyin.com') ||
-        urlLower.includes('tiktok.com') ||
-        urlLower.includes('discord.com') ||
-        urlLower.includes('telegram.org') ||
-        urlLower.includes('whatsapp.com') ||
-        titleLower.includes('社交') ||
-        titleLower.includes('朋友圈') ||
-        titleLower.includes('微博') ||
-        titleLower.includes('social') ||
-        titleLower.includes('chat')) {
-        return 'social';
-    }
-    
-    // 鉴权相关
-    if (urlLower.includes('login') ||
-        urlLower.includes('signin') ||
-        urlLower.includes('auth') ||
-        urlLower.includes('oauth') ||
-        urlLower.includes('sso') ||
-        urlLower.includes('passport') ||
-        urlLower.includes('account') ||
-        urlLower.includes('profile') ||
-        urlLower.includes('settings') ||
-        urlLower.includes('admin') ||
-        titleLower.includes('登录') ||
-        titleLower.includes('注册') ||
-        titleLower.includes('账户') ||
-        titleLower.includes('设置') ||
-        titleLower.includes('管理') ||
-        titleLower.includes('login') ||
-        titleLower.includes('signin')) {
-        return 'auth';
-    }
-    
     return 'other';
 }
 
@@ -440,14 +325,14 @@ async function classifyHistoryWithGemini() {
         }
         
         // 检查是否已经分类过（避免重复分类）
-        const classificationCheck = await chrome.storage.local.get(['hasClassified']);
-        if (classificationCheck.hasClassified) {
-            console.log('历史记录已经分类过，跳过自动分类');
-            return;
-        }
+        // const classificationCheck = await chrome.storage.local.get(['hasClassified']);
+        // if (classificationCheck.hasClassified) {
+        //     console.log('历史记录已经分类过，跳过自动分类');
+        //     return;
+        // }
         
-        // 获取需要分类的标题（只分类前100条，避免API调用过长）
-        const titlesToClassify = currentHistory.slice(0, 100).map(item => item.title);
+        // 获取需要分类的标题（只分类前1000条，避免API调用过长）
+        const titlesToClassify = currentHistory.slice(0, 1000).map(item => item.title);
         
         if (titlesToClassify.length === 0) {
             return;
