@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser History Manager - 浏览历史记录</title>
+    <title id="pageTitle">Browser History Manager - 浏览历史记录</title>
     <link rel="stylesheet" href="history-styles.css">
 </head>
 <body>
@@ -14,25 +14,29 @@
                 <div class="header-left">
                     <h1 class="app-title">
                         <span class="icon">🕒</span>
-                        浏览历史记录管理器
+                        <span data-i18n="appTitle">浏览历史记录管理器</span>
                     </h1>
                 </div>
                 <div class="header-right">
+                    <button id="languageBtn" class="btn btn-language" title="Switch Language / 切换语言">
+                        <span class="btn-icon">🌐</span>
+                        <span id="languageText">EN</span>
+                    </button>
                     <button id="refreshBtn" class="btn btn-primary">
                         <span class="btn-icon">🔄</span>
-                        刷新
+                        <span data-i18n="refresh">刷新</span>
                     </button>
                     <button id="exportTitlesBtn" class="btn btn-secondary">
                         <span class="btn-icon">📝</span>
-                        导出标题
+                        <span data-i18n="exportTitles">导出标题</span>
                     </button>
                     <button id="exportBtn" class="btn btn-secondary">
                         <span class="btn-icon">📤</span>
-                        导出
+                        <span data-i18n="export">导出</span>
                     </button>
                     <button id="clearAllBtn" class="btn btn-danger">
                         <span class="btn-icon">🗑️</span>
-                        清空全部
+                        <span data-i18n="clearAll">清空全部</span>
                     </button>
                 </div>
             </div>
@@ -42,34 +46,34 @@
         <div class="search-section">
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="搜索历史记录..." class="search-input" />
+                    <input type="text" id="searchInput" placeholder="" class="search-input" data-placeholder-zh="搜索历史记录..." data-placeholder-en="Search history..." />
                     <button id="searchBtn" class="search-btn">
                         <span class="search-icon">🔍</span>
                     </button>
                 </div>
                 <div class="api-key-box" style="margin-top: 10px;">
-                    <input type="password" id="mainApiKeyInput" placeholder="输入 Gemini API Key 启用 AI 分类..." class="search-input" style="flex: 1;" />
-                    <button id="saveApiKeyBtn" class="search-btn" title="保存 API Key">
+                    <input type="password" id="mainApiKeyInput" placeholder="" class="search-input" style="flex: 1;" data-placeholder-zh="输入 Gemini API Key 启用 AI 分类..." data-placeholder-en="Enter Gemini API Key to enable AI classification..." />
+                    <button id="saveApiKeyBtn" class="search-btn" title="" data-title-zh="保存 API Key" data-title-en="Save API Key">
                         <span class="search-icon">🔑</span>
                     </button>
-                    <button id="classifyNowBtn" class="search-btn" title="立即分类" style="margin-left: 5px;">
+                    <button id="classifyNowBtn" class="search-btn" title="" style="margin-left: 5px;" data-title-zh="立即分类" data-title-en="Classify Now">
                         <span class="search-icon">🤖</span>
                     </button>
                 </div>
                 <div class="filter-container">
                     <select id="dateFilter" class="filter-select">
-                        <option value="all">全部时间</option>
-                        <option value="today">今天</option>
-                        <option value="week">本周</option>
-                        <option value="month">本月</option>
-                        <option value="year">今年</option>
+                        <option value="all" data-i18n="allTime">全部时间</option>
+                        <option value="today" data-i18n="today">今天</option>
+                        <option value="week" data-i18n="thisWeek">本周</option>
+                        <option value="month" data-i18n="thisMonth">本月</option>
+                        <option value="year" data-i18n="thisYear">今年</option>
                     </select>
                     <select id="sortFilter" class="filter-select">
-                        <option value="time-desc">按时间倒序</option>
-                        <option value="time-asc">按时间正序</option>
-                        <option value="title-asc">按标题A-Z</option>
-                        <option value="title-desc">按标题Z-A</option>
-                        <option value="visits-desc">按访问次数</option>
+                        <option value="time-desc" data-i18n="timeDesc">按时间倒序</option>
+                        <option value="time-asc" data-i18n="timeAsc">按时间正序</option>
+                        <option value="title-asc" data-i18n="titleAsc">按标题A-Z</option>
+                        <option value="title-desc" data-i18n="titleDesc">按标题Z-A</option>
+                        <option value="visits-desc" data-i18n="visitsDesc">按访问次数</option>
                     </select>
                 </div>
             </div>
@@ -81,37 +85,37 @@
                 <div class="category-tabs">
                     <button class="category-tab active" data-category="all">
                         <span class="category-icon">📋</span>
-                        <span class="category-text">全部</span>
+                        <span class="category-text" data-i18n="all">全部</span>
                         <span class="category-count" id="allCount">0</span>
                     </button>
                     <button class="category-tab" data-category="work">
                         <span class="category-icon">💼</span>
-                        <span class="category-text">工作</span>
+                        <span class="category-text" data-i18n="work">工作</span>
                         <span class="category-count" id="workCount">0</span>
                     </button>
                     <button class="category-tab" data-category="entertainment">
                         <span class="category-icon">🎮</span>
-                        <span class="category-text">娱乐</span>
+                        <span class="category-text" data-i18n="entertainment">娱乐</span>
                         <span class="category-count" id="entertainmentCount">0</span>
                     </button>
                     <button class="category-tab" data-category="shopping">
                         <span class="category-icon">🛒</span>
-                        <span class="category-text">购物</span>
+                        <span class="category-text" data-i18n="shopping">购物</span>
                         <span class="category-count" id="shoppingCount">0</span>
                     </button>
                     <button class="category-tab" data-category="news">
                         <span class="category-icon">📰</span>
-                        <span class="category-text">资讯</span>
+                        <span class="category-text" data-i18n="news">资讯</span>
                         <span class="category-count" id="newsCount">0</span>
                     </button>
                     <button class="category-tab" data-category="social">
                         <span class="category-icon">👥</span>
-                        <span class="category-text">社交</span>
+                        <span class="category-text" data-i18n="social">社交</span>
                         <span class="category-count" id="socialCount">0</span>
                     </button>
                     <button class="category-tab" data-category="auth">
                         <span class="category-icon">🔐</span>
-                        <span class="category-text">鉴权</span>
+                        <span class="category-text" data-i18n="auth">鉴权</span>
                         <span class="category-count" id="authCount">0</span>
                     </button>
                 </div>
@@ -123,19 +127,19 @@
             <div class="stats-container">
                 <div class="stat-item">
                     <span class="stat-number" id="totalCount">0</span>
-                    <span class="stat-label">总记录数</span>
+                    <span class="stat-label" data-i18n="totalRecords">总记录数</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" id="filteredCount">0</span>
-                    <span class="stat-label">筛选结果</span>
+                    <span class="stat-label" data-i18n="filteredResults">筛选结果</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" id="starredCount">0</span>
-                    <span class="stat-label">重要标记</span>
+                    <span class="stat-label" data-i18n="starredItems">重要标记</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" id="todayCount">0</span>
-                    <span class="stat-label">今日访问</span>
+                    <span class="stat-label" data-i18n="todayVisits">今日访问</span>
                 </div>
             </div>
         </div>
@@ -144,14 +148,14 @@
         <main class="main-content">
             <div class="content-header">
                 <div class="content-title">
-                    <h2>历史记录列表</h2>
-                    <span class="record-count" id="recordCount">显示 0 条记录</span>
+                    <h2 data-i18n="historyList">历史记录列表</h2>
+                    <span class="record-count" id="recordCount" data-i18n="showingRecords">显示 0 条记录</span>
                 </div>
                 <div class="view-options">
-                    <button id="gridViewBtn" class="view-btn active" title="网格视图">
+                    <button id="gridViewBtn" class="view-btn active" title="" data-title-zh="网格视图" data-title-en="Grid View">
                         <span>⊞</span>
                     </button>
-                    <button id="listViewBtn" class="view-btn" title="列表视图">
+                    <button id="listViewBtn" class="view-btn" title="" data-title-zh="列表视图" data-title-en="List View">
                         <span>☰</span>
                     </button>
                 </div>
@@ -160,37 +164,37 @@
             <div class="history-container">
                 <div id="loadingIndicator" class="loading">
                     <div class="loading-spinner"></div>
-                    <p>正在加载历史记录...</p>
+                    <p data-i18n="loadingHistory">正在加载历史记录...</p>
                 </div>
                 
                 <div id="historyList" class="history-list"></div>
                 
                 <div id="noResults" class="no-results" style="display: none;">
                     <div class="no-results-icon">🔍</div>
-                    <h3>没有找到匹配的历史记录</h3>
-                    <p>尝试调整搜索条件或过滤选项</p>
+                    <h3 data-i18n="noResults">没有找到匹配的历史记录</h3>
+                    <p data-i18n="tryAdjustingFilters">尝试调整搜索条件或过滤选项</p>
                 </div>
             </div>
 
             <!-- 分页控件 -->
             <div class="pagination-section">
                 <div class="pagination-info">
-                    <span id="pageInfo">第 1 页，共 1 页</span>
+                    <span id="pageInfo" data-i18n="pageInfo">第 1 页，共 1 页</span>
                 </div>
                 <div class="pagination-controls">
-                    <button id="firstPage" class="btn btn-secondary" disabled>首页</button>
-                    <button id="prevPage" class="btn btn-secondary" disabled>上一页</button>
+                    <button id="firstPage" class="btn btn-secondary" disabled data-i18n="firstPage">首页</button>
+                    <button id="prevPage" class="btn btn-secondary" disabled data-i18n="prevPage">上一页</button>
                     <div class="page-numbers" id="pageNumbers"></div>
-                    <button id="nextPage" class="btn btn-secondary" disabled>下一页</button>
-                    <button id="lastPage" class="btn btn-secondary" disabled>末页</button>
+                    <button id="nextPage" class="btn btn-secondary" disabled data-i18n="nextPage">下一页</button>
+                    <button id="lastPage" class="btn btn-secondary" disabled data-i18n="lastPage">末页</button>
                 </div>
                 <div class="pagination-size">
-                    <label for="pageSize">每页显示：</label>
+                    <label for="pageSize" data-i18n="itemsPerPage">每页显示：</label>
                     <select id="pageSize" class="page-size-select">
-                        <option value="10">10条</option>
-                        <option value="20" selected>20条</option>
-                        <option value="50">50条</option>
-                        <option value="100">100条</option>
+                        <option value="10" data-i18n="items10">10条</option>
+                        <option value="20" selected data-i18n="items20">20条</option>
+                        <option value="50" data-i18n="items50">50条</option>
+                        <option value="100" data-i18n="items100">100条</option>
                     </select>
                 </div>
             </div>
@@ -199,10 +203,10 @@
         <!-- 底部信息 -->
         <footer class="app-footer">
             <div class="footer-content">
-                <p>Browser History Manager v1.0.0 | 管理您的浏览历史记录</p>
+                <p id="footerText">Browser History Manager v1.0.0 | 管理您的浏览历史记录</p>
                 <div class="footer-links">
-                    <button id="settingsBtn" class="footer-link">设置</button>
-                    <button id="helpBtn" class="footer-link">帮助</button>
+                    <button id="settingsBtn" class="footer-link" data-i18n="settings">设置</button>
+                    <button id="helpBtn" class="footer-link" data-i18n="help">帮助</button>
                 </div>
             </div>
         </footer>
@@ -212,42 +216,42 @@
     <div id="exportModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>导出历史记录</h3>
+                <h3 data-i18n="exportHistory">导出历史记录</h3>
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="export-options">
                     <div class="option-group">
-                        <label class="option-label">导出格式</label>
+                        <label class="option-label" data-i18n="exportFormat">导出格式</label>
                         <div class="radio-group">
                             <label class="radio-option">
                                 <input type="radio" name="exportFormat" value="csv" checked>
-                                <span class="radio-text">CSV格式 (Excel兼容)</span>
+                                <span class="radio-text" data-i18n="csvFormat">CSV格式 (Excel兼容)</span>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="exportFormat" value="json">
-                                <span class="radio-text">JSON格式 (程序兼容)</span>
+                                <span class="radio-text" data-i18n="jsonFormat">JSON格式 (程序兼容)</span>
                             </label>
                         </div>
                     </div>
                     <div class="option-group">
-                        <label class="option-label">导出范围</label>
+                        <label class="option-label" data-i18n="exportRange">导出范围</label>
                         <div class="radio-group">
                             <label class="radio-option">
                                 <input type="radio" name="exportRange" value="filtered" checked>
-                                <span class="radio-text">当前筛选结果</span>
+                                <span class="radio-text" data-i18n="currentFilter">当前筛选结果</span>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="exportRange" value="all">
-                                <span class="radio-text">全部历史记录</span>
+                                <span class="radio-text" data-i18n="allHistory">全部历史记录</span>
                             </label>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="confirmExport" class="btn btn-primary">确认导出</button>
-                <button id="cancelExport" class="btn btn-secondary">取消</button>
+                <button id="confirmExport" class="btn btn-primary" data-i18n="confirmExport">确认导出</button>
+                <button id="cancelExport" class="btn btn-secondary" data-i18n="cancel">取消</button>
             </div>
         </div>
     </div>
@@ -256,41 +260,41 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>设置</h3>
+                <h3 data-i18n="settings">设置</h3>
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="settings-group">
                     <label class="setting-label">
                         <input type="checkbox" id="autoRefresh" checked>
-                        自动刷新历史记录
+                        <span data-i18n="autoRefresh">自动刷新历史记录</span>
                     </label>
                     <label class="setting-label">
                         <input type="checkbox" id="showVisits" checked>
-                        显示访问次数
+                        <span data-i18n="showVisits">显示访问次数</span>
                     </label>
                     <label class="setting-label">
                         <input type="checkbox" id="showFavicon" checked>
-                        显示网站图标
+                        <span data-i18n="showFavicon">显示网站图标</span>
                     </label>
                     <div class="setting-field">
-                        <label for="geminiApiKey" class="setting-label-text">Gemini API Key（仅本机保存）</label>
-                        <input type="password" id="geminiApiKey" placeholder="请输入 Gemini API Key" class="input-text" />
-                        <div class="setting-hint">用于分类时在本机使用，扩展不会将密钥上传至任何服务器。</div>
+                        <label for="geminiApiKey" class="setting-label-text" data-i18n="geminiApiKey">Gemini API Key（仅本机保存）</label>
+                        <input type="password" id="geminiApiKey" placeholder="" class="input-text" data-placeholder-zh="请输入 Gemini API Key" data-placeholder-en="Please enter Gemini API Key" />
+                        <div class="setting-hint" data-i18n="apiKeyHint">用于分类时在本机使用，扩展不会将密钥上传至任何服务器。</div>
                         <button id="classifyBtn" class="btn btn-secondary" style="margin-top: 10px;">
                             <span class="btn-icon">🤖</span>
-                            使用 AI 重新分类历史记录
+                            <span data-i18n="reclassifyWithAI">使用 AI 重新分类历史记录</span>
                         </button>
                         <button id="clearClassificationBtn" class="btn btn-secondary" style="margin-top: 5px;">
                             <span class="btn-icon">🔄</span>
-                            清除分类标记（下次加载时重新分类）
+                            <span data-i18n="clearClassification">清除分类标记（下次加载时重新分类）</span>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="saveSettings" class="btn btn-primary">保存设置</button>
-                <button id="cancelSettings" class="btn btn-secondary">取消</button>
+                <button id="saveSettings" class="btn btn-primary" data-i18n="saveSettings">保存设置</button>
+                <button id="cancelSettings" class="btn btn-secondary" data-i18n="cancel">取消</button>
             </div>
         </div>
     </div>

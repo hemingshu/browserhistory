@@ -10,6 +10,203 @@ let viewMode = 'grid'; // 'grid' or 'list'
 let isAutoRefresh = false;
 let refreshInterval = null;
 let categoryFilter = 'all'; // 新增类别过滤
+let currentLanguage = 'zh'; // 当前语言：'zh' 或 'en'
+
+// 语言数据
+const translations = {
+    zh: {
+        // 页面标题
+        pageTitle: 'Browser History Manager - 浏览历史记录',
+        appTitle: '浏览历史记录管理器',
+        
+        // 按钮
+        refresh: '刷新',
+        exportTitles: '导出标题',
+        export: '导出',
+        clearAll: '清空全部',
+        
+        // 搜索和过滤
+        searchPlaceholder: '搜索历史记录...',
+        apiKeyPlaceholder: '输入 Gemini API Key 启用 AI 分类...',
+        saveApiKey: '保存 API Key',
+        classifyNow: '立即分类',
+        
+        // 时间过滤
+        allTime: '全部时间',
+        today: '今天',
+        thisWeek: '本周',
+        thisMonth: '本月',
+        thisYear: '今年',
+        
+        // 排序
+        timeDesc: '按时间倒序',
+        timeAsc: '按时间正序',
+        titleAsc: '按标题A-Z',
+        titleDesc: '按标题Z-A',
+        visitsDesc: '按访问次数',
+        
+        // 类别
+        all: '全部',
+        work: '工作',
+        entertainment: '娱乐',
+        shopping: '购物',
+        news: '资讯',
+        social: '社交',
+        auth: '鉴权',
+        
+        // 统计
+        totalRecords: '总记录数',
+        filteredResults: '筛选结果',
+        starredItems: '重要标记',
+        todayVisits: '今日访问',
+        
+        // 主内容
+        historyList: '历史记录列表',
+        showingRecords: '显示 0 条记录',
+        gridView: '网格视图',
+        listView: '列表视图',
+        
+        // 加载和结果
+        loadingHistory: '正在加载历史记录...',
+        noResults: '没有找到匹配的历史记录',
+        tryAdjustingFilters: '尝试调整搜索条件或过滤选项',
+        
+        // 分页
+        pageInfo: '第 1 页，共 1 页',
+        firstPage: '首页',
+        prevPage: '上一页',
+        nextPage: '下一页',
+        lastPage: '末页',
+        itemsPerPage: '每页显示：',
+        items10: '10条',
+        items20: '20条',
+        items50: '50条',
+        items100: '100条',
+        
+        // 底部
+        footerText: 'Browser History Manager v1.0.0 | 管理您的浏览历史记录',
+        settings: '设置',
+        help: '帮助',
+        
+        // 导出模态框
+        exportHistory: '导出历史记录',
+        exportFormat: '导出格式',
+        csvFormat: 'CSV格式 (Excel兼容)',
+        jsonFormat: 'JSON格式 (程序兼容)',
+        exportRange: '导出范围',
+        currentFilter: '当前筛选结果',
+        allHistory: '全部历史记录',
+        confirmExport: '确认导出',
+        cancel: '取消',
+        
+        // 设置模态框
+        autoRefresh: '自动刷新历史记录',
+        showVisits: '显示访问次数',
+        showFavicon: '显示网站图标',
+        geminiApiKey: 'Gemini API Key（仅本机保存）',
+        apiKeyPlaceholderSettings: '请输入 Gemini API Key',
+        apiKeyHint: '用于分类时在本机使用，扩展不会将密钥上传至任何服务器。',
+        reclassifyWithAI: '使用 AI 重新分类历史记录',
+        clearClassification: '清除分类标记（下次加载时重新分类）',
+        saveSettings: '保存设置'
+    },
+    en: {
+        // 页面标题
+        pageTitle: 'Browser History Manager - Browse History',
+        appTitle: 'Browser History Manager',
+        
+        // 按钮
+        refresh: 'Refresh',
+        exportTitles: 'Export Titles',
+        export: 'Export',
+        clearAll: 'Clear All',
+        
+        // 搜索和过滤
+        searchPlaceholder: 'Search history...',
+        apiKeyPlaceholder: 'Enter Gemini API Key to enable AI classification...',
+        saveApiKey: 'Save API Key',
+        classifyNow: 'Classify Now',
+        
+        // 时间过滤
+        allTime: 'All Time',
+        today: 'Today',
+        thisWeek: 'This Week',
+        thisMonth: 'This Month',
+        thisYear: 'This Year',
+        
+        // 排序
+        timeDesc: 'Time (Newest First)',
+        timeAsc: 'Time (Oldest First)',
+        titleAsc: 'Title (A-Z)',
+        titleDesc: 'Title (Z-A)',
+        visitsDesc: 'Visit Count',
+        
+        // 类别
+        all: 'All',
+        work: 'Work',
+        entertainment: 'Entertainment',
+        shopping: 'Shopping',
+        news: 'News',
+        social: 'Social',
+        auth: 'Auth',
+        
+        // 统计
+        totalRecords: 'Total Records',
+        filteredResults: 'Filtered Results',
+        starredItems: 'Starred Items',
+        todayVisits: 'Today\'s Visits',
+        
+        // 主内容
+        historyList: 'History List',
+        showingRecords: 'Showing 0 records',
+        gridView: 'Grid View',
+        listView: 'List View',
+        
+        // 加载和结果
+        loadingHistory: 'Loading history...',
+        noResults: 'No matching history found',
+        tryAdjustingFilters: 'Try adjusting search criteria or filter options',
+        
+        // 分页
+        pageInfo: 'Page 1 of 1',
+        firstPage: 'First',
+        prevPage: 'Previous',
+        nextPage: 'Next',
+        lastPage: 'Last',
+        itemsPerPage: 'Items per page:',
+        items10: '10 items',
+        items20: '20 items',
+        items50: '50 items',
+        items100: '100 items',
+        
+        // 底部
+        footerText: 'Browser History Manager v1.0.0 | Manage Your Browse History',
+        settings: 'Settings',
+        help: 'Help',
+        
+        // 导出模态框
+        exportHistory: 'Export History',
+        exportFormat: 'Export Format',
+        csvFormat: 'CSV Format (Excel Compatible)',
+        jsonFormat: 'JSON Format (Program Compatible)',
+        exportRange: 'Export Range',
+        currentFilter: 'Current Filter Results',
+        allHistory: 'All History',
+        confirmExport: 'Confirm Export',
+        cancel: 'Cancel',
+        
+        // 设置模态框
+        autoRefresh: 'Auto Refresh History',
+        showVisits: 'Show Visit Count',
+        showFavicon: 'Show Website Icons',
+        geminiApiKey: 'Gemini API Key (Local Only)',
+        apiKeyPlaceholderSettings: 'Please enter Gemini API Key',
+        apiKeyHint: 'Used for classification locally, extension will not upload the key to any server.',
+        reclassifyWithAI: 'Reclassify History with AI',
+        clearClassification: 'Clear Classification Tags (Reclassify on Next Load)',
+        saveSettings: 'Save Settings'
+    }
+};
 
 // DOM元素
 const searchInput = document.getElementById('searchInput');
@@ -45,6 +242,12 @@ const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 const classifyNowBtn = document.getElementById('classifyNowBtn');
 const clearClassificationBtn = document.getElementById('clearClassificationBtn');
 
+// 语言切换相关元素
+const languageBtn = document.getElementById('languageBtn');
+const languageText = document.getElementById('languageText');
+const pageTitle = document.getElementById('pageTitle');
+const footerText = document.getElementById('footerText');
+
 // 类别选项卡元素
 const categoryTabs = document.querySelectorAll('.category-tab');
 
@@ -57,6 +260,7 @@ const recordCountEl = document.getElementById('recordCount');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
+    initializeLanguage();
     initializeEventListeners();
     loadSettings();
     loadHistory(true); // 首次加载时进行分类
@@ -103,6 +307,9 @@ function initializeEventListeners() {
             setCategoryFilter(category);
         });
     });
+    
+    // 语言切换
+    languageBtn.addEventListener('click', toggleLanguage);
     
     // 操作按钮
     refreshBtn.addEventListener('click', () => loadHistory(true)); // 手动刷新时进行分类
@@ -697,13 +904,13 @@ function renderHistory() {
     if (pageHistory.length === 0) {
         historyList.innerHTML = '';
         noResults.style.display = 'block';
-        recordCountEl.textContent = '显示 0 条记录';
+        updateRecordCount();
         return;
     }
     
     noResults.style.display = 'none';
     filteredCountEl.textContent = filteredHistory.length.toLocaleString();
-    recordCountEl.textContent = `显示 ${startIndex + 1}-${Math.min(endIndex, filteredHistory.length)} 条记录，共 ${filteredHistory.length} 条`;
+    updateRecordCount();
     
     historyList.innerHTML = pageHistory.map(item => createHistoryItemHTML(item)).join('');
     
@@ -883,7 +1090,7 @@ function updatePagination() {
     lastPageBtn.disabled = currentPage >= totalPages;
     
     // 更新页面信息
-    pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+    updatePageInfo();
     
     // 生成页码按钮
     generatePageNumbers(totalPages);
@@ -1102,3 +1309,103 @@ function showError(message) {
 window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
 });
+
+// 语言切换相关函数
+function initializeLanguage() {
+    // 从localStorage加载保存的语言设置
+    const savedLanguage = localStorage.getItem('browserHistoryLanguage');
+    if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'en')) {
+        currentLanguage = savedLanguage;
+    }
+    
+    // 应用当前语言
+    applyLanguage();
+}
+
+function toggleLanguage() {
+    currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
+    localStorage.setItem('browserHistoryLanguage', currentLanguage);
+    applyLanguage();
+}
+
+function applyLanguage() {
+    const t = translations[currentLanguage];
+    
+    // 更新页面标题
+    if (pageTitle) {
+        pageTitle.textContent = t.pageTitle;
+    }
+    
+    // 更新语言按钮文本
+    if (languageText) {
+        languageText.textContent = currentLanguage === 'zh' ? 'EN' : '中文';
+    }
+    
+    // 更新所有带有data-i18n属性的元素
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (t[key]) {
+            element.textContent = t[key];
+        }
+    });
+    
+    // 更新placeholder属性
+    document.querySelectorAll('[data-placeholder-zh]').forEach(element => {
+        const placeholder = currentLanguage === 'zh' ? 
+            element.getAttribute('data-placeholder-zh') : 
+            element.getAttribute('data-placeholder-en');
+        if (placeholder) {
+            element.placeholder = placeholder;
+        }
+    });
+    
+    // 更新title属性
+    document.querySelectorAll('[data-title-zh]').forEach(element => {
+        const title = currentLanguage === 'zh' ? 
+            element.getAttribute('data-title-zh') : 
+            element.getAttribute('data-title-en');
+        if (title) {
+            element.title = title;
+        }
+    });
+    
+    // 更新底部文本
+    if (footerText) {
+        footerText.textContent = t.footerText;
+    }
+    
+    // 更新HTML lang属性
+    document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : 'en';
+    
+    // 更新分页信息
+    updatePageInfo();
+}
+
+// 更新分页信息的语言
+function updatePageInfo() {
+    if (!pageInfo) return;
+    
+    const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+    const t = translations[currentLanguage];
+    
+    if (currentLanguage === 'zh') {
+        pageInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+    } else {
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    }
+}
+
+// 更新记录计数显示的语言
+function updateRecordCount() {
+    if (!recordCountEl) return;
+    
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, filteredHistory.length);
+    const t = translations[currentLanguage];
+    
+    if (currentLanguage === 'zh') {
+        recordCountEl.textContent = `显示 ${start}-${end} 条记录，共 ${filteredHistory.length} 条`;
+    } else {
+        recordCountEl.textContent = `Showing ${start}-${end} of ${filteredHistory.length} records`;
+    }
+}

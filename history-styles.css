@@ -97,6 +97,11 @@ body {
     color: white;
 }
 
+.btn-language {
+    background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+    color: white;
+}
+
 .btn:disabled {
     background: #ccc;
     cursor: not-allowed;
