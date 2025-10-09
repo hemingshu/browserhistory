@@ -39,6 +39,10 @@ const cancelExportBtn = document.getElementById('cancelExport');
 const settingsBtn = document.getElementById('settingsBtn');
 const helpBtn = document.getElementById('helpBtn');
 const geminiApiKeyInput = document.getElementById('geminiApiKey');
+const classifyBtn = document.getElementById('classifyBtn');
+const mainApiKeyInput = document.getElementById('mainApiKeyInput');
+const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+const classifyNowBtn = document.getElementById('classifyNowBtn');
 
 // 类别选项卡元素
 const categoryTabs = document.querySelectorAll('.category-tab');
@@ -136,6 +140,19 @@ function initializeEventListeners() {
     // 设置保存
     document.getElementById('saveSettings').addEventListener('click', saveSettings);
     document.getElementById('cancelSettings').addEventListener('click', hideSettingsModal);
+    
+    // AI 分类按钮
+    if (classifyBtn) {
+        classifyBtn.addEventListener('click', handleManualClassification);
+    }
+    
+    // 主页面 API Key 相关按钮
+    if (saveApiKeyBtn) {
+        saveApiKeyBtn.addEventListener('click', saveApiKeyFromMain);
+    }
+    if (classifyNowBtn) {
+        classifyNowBtn.addEventListener('click', classifyNowFromMain);
+    }
 }
 
 // 加载设置
@@ -149,8 +166,13 @@ async function loadSettings() {
             document.getElementById('showVisits').checked = settings.showVisits !== false;
             document.getElementById('showFavicon').checked = settings.showFavicon !== false;
         }
-        if (result.geminiApiKey && geminiApiKeyInput) {
-            geminiApiKeyInput.value = result.geminiApiKey;
+        if (result.geminiApiKey) {
+            if (geminiApiKeyInput) {
+                geminiApiKeyInput.value = result.geminiApiKey;
+            }
+            if (mainApiKeyInput) {
+                mainApiKeyInput.value = result.geminiApiKey;
+            }
         }
     } catch (error) {
         console.error('加载设置失败:', error);
@@ -234,6 +256,9 @@ async function loadHistory() {
         
         // 从存储中加载用户标记
         await loadUserMarks();
+        
+        // 尝试使用 Gemini API 进行分类
+        await classifyHistoryWithGemini();
         
         // 更新统计信息
         updateStats();
@@ -387,6 +412,192 @@ async function loadUserMarks() {
         }
     } catch (error) {
         console.error('加载用户标记失败:', error);
+    }
+}
+
+// 使用 Gemini API 对历史记录进行分类
+async function classifyHistoryWithGemini() {
+    try {
+        // 检查是否有 Gemini API Key
+        const result = await chrome.storage.local.get(['geminiApiKey']);
+        const apiKey = result.geminiApiKey;
+        
+        if (!apiKey || !apiKey.trim()) {
+            console.log('未设置 Gemini API Key，跳过自动分类');
+            return;
+        }
+        
+        // 检查是否有 GeminiClassifier 可用
+        if (typeof window.GeminiClassifier === 'undefined') {
+            console.log('GeminiClassifier 未加载，跳过自动分类');
+            return;
+        }
+        
+        // 获取需要分类的标题（只分类前100条，避免API调用过长）
+        const titlesToClassify = currentHistory.slice(0, 100).map(item => item.title);
+        
+        if (titlesToClassify.length === 0) {
+            return;
+        }
+        
+        console.log(`开始使用 Gemini API 分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, apiKey);
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            console.log('Gemini API 分类完成');
+            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('Gemini API 分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    }
+}
+
+// 手动触发分类
+async function handleManualClassification() {
+    if (!geminiApiKeyInput || !geminiApiKeyInput.value.trim()) {
+        showMessage('请先设置 Gemini API Key', 'error');
+        return;
+    }
+    
+    if (currentHistory.length === 0) {
+        showMessage('暂无历史记录可分类', 'error');
+        return;
+    }
+    
+    if (typeof window.GeminiClassifier === 'undefined') {
+        showMessage('AI 分类功能未加载，请刷新页面重试', 'error');
+        return;
+    }
+    
+    // 禁用按钮，显示加载状态
+    classifyBtn.disabled = true;
+    classifyBtn.innerHTML = '<span class="btn-icon">⏳</span>分类中...';
+    
+    try {
+        // 获取所有历史记录的标题进行分类
+        const titlesToClassify = currentHistory.map(item => item.title);
+        
+        console.log(`开始手动分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, geminiApiKeyInput.value.trim());
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            // 更新统计和显示
+            updateStats();
+            applyFilters();
+            
+            console.log('手动分类完成');
+            showMessage(`已使用 AI 重新分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('手动分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        classifyBtn.disabled = false;
+        classifyBtn.innerHTML = '<span class="btn-icon">🤖</span>使用 AI 重新分类历史记录';
+    }
+}
+
+// 从主页面保存 API Key
+async function saveApiKeyFromMain() {
+    if (!mainApiKeyInput || !mainApiKeyInput.value.trim()) {
+        showMessage('请输入 Gemini API Key', 'error');
+        return;
+    }
+    
+    try {
+        const apiKey = mainApiKeyInput.value.trim();
+        await chrome.storage.local.set({ geminiApiKey: apiKey });
+        
+        // 同步到设置页面的输入框
+        if (geminiApiKeyInput) {
+            geminiApiKeyInput.value = apiKey;
+        }
+        
+        showMessage('API Key 已保存', 'success');
+    } catch (error) {
+        console.error('保存 API Key 失败:', error);
+        showMessage('保存 API Key 失败', 'error');
+    }
+}
+
+// 从主页面立即分类
+async function classifyNowFromMain() {
+    if (!mainApiKeyInput || !mainApiKeyInput.value.trim()) {
+        showMessage('请先输入 Gemini API Key', 'error');
+        return;
+    }
+    
+    if (currentHistory.length === 0) {
+        showMessage('暂无历史记录可分类', 'error');
+        return;
+    }
+    
+    if (typeof window.GeminiClassifier === 'undefined') {
+        showMessage('AI 分类功能未加载，请刷新页面重试', 'error');
+        return;
+    }
+    
+    // 先保存 API Key
+    await saveApiKeyFromMain();
+    
+    // 禁用按钮，显示加载状态
+    classifyNowBtn.disabled = true;
+    classifyNowBtn.innerHTML = '<span class="search-icon">⏳</span>';
+    
+    try {
+        // 获取所有历史记录的标题进行分类
+        const titlesToClassify = currentHistory.map(item => item.title);
+        
+        console.log(`开始从主页面分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, mainApiKeyInput.value.trim());
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            // 更新统计和显示
+            updateStats();
+            applyFilters();
+            
+            console.log('主页面分类完成');
+            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('主页面分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        classifyNowBtn.disabled = false;
+        classifyNowBtn.innerHTML = '<span class="search-icon">🤖</span>';
     }
 }
 
