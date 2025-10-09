@@ -43,6 +43,7 @@ const classifyBtn = document.getElementById('classifyBtn');
 const mainApiKeyInput = document.getElementById('mainApiKeyInput');
 const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 const classifyNowBtn = document.getElementById('classifyNowBtn');
+const clearClassificationBtn = document.getElementById('clearClassificationBtn');
 
 // 类别选项卡元素
 const categoryTabs = document.querySelectorAll('.category-tab');
@@ -58,7 +59,7 @@ const recordCountEl = document.getElementById('recordCount');
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     loadSettings();
-    loadHistory();
+    loadHistory(true); // 首次加载时进行分类
     startAutoRefresh();
 });
 
@@ -104,7 +105,7 @@ function initializeEventListeners() {
     });
     
     // 操作按钮
-    refreshBtn.addEventListener('click', loadHistory);
+    refreshBtn.addEventListener('click', () => loadHistory(true)); // 手动刷新时进行分类
     exportBtn.addEventListener('click', showExportModal);
     if (exportTitlesBtn) {
         exportTitlesBtn.addEventListener('click', exportTitlesJSON);
@@ -144,6 +145,9 @@ function initializeEventListeners() {
     // AI 分类按钮
     if (classifyBtn) {
         classifyBtn.addEventListener('click', handleManualClassification);
+    }
+    if (clearClassificationBtn) {
+        clearClassificationBtn.addEventListener('click', clearClassificationMark);
     }
     
     // 主页面 API Key 相关按钮
@@ -211,7 +215,7 @@ async function saveSettings() {
 function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
     if (isAutoRefresh) {
-        refreshInterval = setInterval(loadHistory, 30000); // 30秒刷新一次
+        refreshInterval = setInterval(() => loadHistory(false), 30000); // 30秒刷新一次，不进行分类
     }
 }
 
@@ -223,7 +227,7 @@ function stopAutoRefresh() {
 }
 
 // 加载历史记录
-async function loadHistory() {
+async function loadHistory(shouldClassify = false) {
     showLoading();
     
     try {
@@ -257,8 +261,10 @@ async function loadHistory() {
         // 从存储中加载用户标记
         await loadUserMarks();
         
-        // 尝试使用 Gemini API 进行分类
-        await classifyHistoryWithGemini();
+        // 只有在明确要求时才进行分类
+        if (shouldClassify) {
+            await classifyHistoryWithGemini();
+        }
         
         // 更新统计信息
         updateStats();
@@ -433,6 +439,13 @@ async function classifyHistoryWithGemini() {
             return;
         }
         
+        // 检查是否已经分类过（避免重复分类）
+        const classificationCheck = await chrome.storage.local.get(['hasClassified']);
+        if (classificationCheck.hasClassified) {
+            console.log('历史记录已经分类过，跳过自动分类');
+            return;
+        }
+        
         // 获取需要分类的标题（只分类前100条，避免API调用过长）
         const titlesToClassify = currentHistory.slice(0, 100).map(item => item.title);
         
@@ -452,6 +465,9 @@ async function classifyHistoryWithGemini() {
                     currentHistory[index].category = classifiedItem.category;
                 }
             });
+            
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
             
             console.log('Gemini API 分类完成');
             showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
@@ -500,6 +516,9 @@ async function handleManualClassification() {
                     currentHistory[index].category = classifiedItem.category;
                 }
             });
+            
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
             
             // 更新统计和显示
             updateStats();
@@ -583,6 +602,9 @@ async function classifyNowFromMain() {
                 }
             });
             
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
+            
             // 更新统计和显示
             updateStats();
             applyFilters();
@@ -598,6 +620,17 @@ async function classifyNowFromMain() {
         // 恢复按钮状态
         classifyNowBtn.disabled = false;
         classifyNowBtn.innerHTML = '<span class="search-icon">🤖</span>';
+    }
+}
+
+// 清除分类标记
+async function clearClassificationMark() {
+    try {
+        await chrome.storage.local.remove(['hasClassified']);
+        showMessage('分类标记已清除，下次加载时将重新分类', 'success');
+    } catch (error) {
+        console.error('清除分类标记失败:', error);
+        showMessage('清除分类标记失败', 'error');
     }
 }
 
