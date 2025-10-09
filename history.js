@@ -18,6 +18,7 @@ const dateFilterSelect = document.getElementById('dateFilter');
 const sortFilterSelect = document.getElementById('sortFilter');
 const refreshBtn = document.getElementById('refreshBtn');
 const exportBtn = document.getElementById('exportBtn');
+const exportTitlesBtn = document.getElementById('exportTitlesBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const historyList = document.getElementById('historyList');
 const loadingIndicator = document.getElementById('loadingIndicator');
@@ -37,6 +38,12 @@ const confirmExportBtn = document.getElementById('confirmExport');
 const cancelExportBtn = document.getElementById('cancelExport');
 const settingsBtn = document.getElementById('settingsBtn');
 const helpBtn = document.getElementById('helpBtn');
+const geminiApiKeyInput = document.getElementById('geminiApiKey');
+const classifyBtn = document.getElementById('classifyBtn');
+const mainApiKeyInput = document.getElementById('mainApiKeyInput');
+const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+const classifyNowBtn = document.getElementById('classifyNowBtn');
+const clearClassificationBtn = document.getElementById('clearClassificationBtn');
 
 // 类别选项卡元素
 const categoryTabs = document.querySelectorAll('.category-tab');
@@ -52,7 +59,7 @@ const recordCountEl = document.getElementById('recordCount');
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     loadSettings();
-    loadHistory();
+    loadHistory(true); // 首次加载时进行分类
     startAutoRefresh();
 });
 
@@ -98,8 +105,11 @@ function initializeEventListeners() {
     });
     
     // 操作按钮
-    refreshBtn.addEventListener('click', loadHistory);
+    refreshBtn.addEventListener('click', () => loadHistory(true)); // 手动刷新时进行分类
     exportBtn.addEventListener('click', showExportModal);
+    if (exportTitlesBtn) {
+        exportTitlesBtn.addEventListener('click', exportTitlesJSON);
+    }
     clearAllBtn.addEventListener('click', clearAllHistory);
     
     // 分页
@@ -131,18 +141,42 @@ function initializeEventListeners() {
     // 设置保存
     document.getElementById('saveSettings').addEventListener('click', saveSettings);
     document.getElementById('cancelSettings').addEventListener('click', hideSettingsModal);
+    
+    // AI 分类按钮
+    if (classifyBtn) {
+        classifyBtn.addEventListener('click', handleManualClassification);
+    }
+    if (clearClassificationBtn) {
+        clearClassificationBtn.addEventListener('click', clearClassificationMark);
+    }
+    
+    // 主页面 API Key 相关按钮
+    if (saveApiKeyBtn) {
+        saveApiKeyBtn.addEventListener('click', saveApiKeyFromMain);
+    }
+    if (classifyNowBtn) {
+        classifyNowBtn.addEventListener('click', classifyNowFromMain);
+    }
 }
 
 // 加载设置
 async function loadSettings() {
     try {
-        const result = await chrome.storage.local.get(['historySettings']);
+        const result = await chrome.storage.local.get(['historySettings','geminiApiKey']);
         if (result.historySettings) {
             const settings = result.historySettings;
             isAutoRefresh = settings.autoRefresh !== false;
             document.getElementById('autoRefresh').checked = isAutoRefresh;
             document.getElementById('showVisits').checked = settings.showVisits !== false;
             document.getElementById('showFavicon').checked = settings.showFavicon !== false;
+        }
+        if (result.geminiApiKey) {
+            if (geminiApiKeyInput) {
+                geminiApiKeyInput.value = result.geminiApiKey;
+            }
+            if (mainApiKeyInput) {
+                mainApiKeyInput.value = result.geminiApiKey;
+            }
         }
     } catch (error) {
         console.error('加载设置失败:', error);
@@ -157,7 +191,12 @@ async function saveSettings() {
             showVisits: document.getElementById('showVisits').checked,
             showFavicon: document.getElementById('showFavicon').checked
         };
-        await chrome.storage.local.set({ historySettings: settings });
+        const apiKey = geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '';
+        const toSave = { historySettings: settings };
+        if (apiKey) {
+            toSave.geminiApiKey = apiKey;
+        }
+        await chrome.storage.local.set(toSave);
         isAutoRefresh = settings.autoRefresh;
         if (isAutoRefresh) {
             startAutoRefresh();
@@ -176,7 +215,7 @@ async function saveSettings() {
 function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
     if (isAutoRefresh) {
-        refreshInterval = setInterval(loadHistory, 30000); // 30秒刷新一次
+        refreshInterval = setInterval(() => loadHistory(false), 30000); // 30秒刷新一次，不进行分类
     }
 }
 
@@ -188,7 +227,7 @@ function stopAutoRefresh() {
 }
 
 // 加载历史记录
-async function loadHistory() {
+async function loadHistory(shouldClassify = false) {
     showLoading();
     
     try {
@@ -221,6 +260,11 @@ async function loadHistory() {
         
         // 从存储中加载用户标记
         await loadUserMarks();
+        
+        // 只有在明确要求时才进行分类
+        if (shouldClassify) {
+            await classifyHistoryWithGemini();
+        }
         
         // 更新统计信息
         updateStats();
@@ -374,6 +418,219 @@ async function loadUserMarks() {
         }
     } catch (error) {
         console.error('加载用户标记失败:', error);
+    }
+}
+
+// 使用 Gemini API 对历史记录进行分类
+async function classifyHistoryWithGemini() {
+    try {
+        // 检查是否有 Gemini API Key
+        const result = await chrome.storage.local.get(['geminiApiKey']);
+        const apiKey = result.geminiApiKey;
+        
+        if (!apiKey || !apiKey.trim()) {
+            console.log('未设置 Gemini API Key，跳过自动分类');
+            return;
+        }
+        
+        // 检查是否有 GeminiClassifier 可用
+        if (typeof window.GeminiClassifier === 'undefined') {
+            console.log('GeminiClassifier 未加载，跳过自动分类');
+            return;
+        }
+        
+        // 检查是否已经分类过（避免重复分类）
+        const classificationCheck = await chrome.storage.local.get(['hasClassified']);
+        if (classificationCheck.hasClassified) {
+            console.log('历史记录已经分类过，跳过自动分类');
+            return;
+        }
+        
+        // 获取需要分类的标题（只分类前100条，避免API调用过长）
+        const titlesToClassify = currentHistory.slice(0, 100).map(item => item.title);
+        
+        if (titlesToClassify.length === 0) {
+            return;
+        }
+        
+        console.log(`开始使用 Gemini API 分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, apiKey);
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
+            
+            console.log('Gemini API 分类完成');
+            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('Gemini API 分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    }
+}
+
+// 手动触发分类
+async function handleManualClassification() {
+    if (!geminiApiKeyInput || !geminiApiKeyInput.value.trim()) {
+        showMessage('请先设置 Gemini API Key', 'error');
+        return;
+    }
+    
+    if (currentHistory.length === 0) {
+        showMessage('暂无历史记录可分类', 'error');
+        return;
+    }
+    
+    if (typeof window.GeminiClassifier === 'undefined') {
+        showMessage('AI 分类功能未加载，请刷新页面重试', 'error');
+        return;
+    }
+    
+    // 禁用按钮，显示加载状态
+    classifyBtn.disabled = true;
+    classifyBtn.innerHTML = '<span class="btn-icon">⏳</span>分类中...';
+    
+    try {
+        // 获取所有历史记录的标题进行分类
+        const titlesToClassify = currentHistory.map(item => item.title);
+        
+        console.log(`开始手动分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, geminiApiKeyInput.value.trim());
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
+            
+            // 更新统计和显示
+            updateStats();
+            applyFilters();
+            
+            console.log('手动分类完成');
+            showMessage(`已使用 AI 重新分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('手动分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        classifyBtn.disabled = false;
+        classifyBtn.innerHTML = '<span class="btn-icon">🤖</span>使用 AI 重新分类历史记录';
+    }
+}
+
+// 从主页面保存 API Key
+async function saveApiKeyFromMain() {
+    if (!mainApiKeyInput || !mainApiKeyInput.value.trim()) {
+        showMessage('请输入 Gemini API Key', 'error');
+        return;
+    }
+    
+    try {
+        const apiKey = mainApiKeyInput.value.trim();
+        await chrome.storage.local.set({ geminiApiKey: apiKey });
+        
+        // 同步到设置页面的输入框
+        if (geminiApiKeyInput) {
+            geminiApiKeyInput.value = apiKey;
+        }
+        
+        showMessage('API Key 已保存', 'success');
+    } catch (error) {
+        console.error('保存 API Key 失败:', error);
+        showMessage('保存 API Key 失败', 'error');
+    }
+}
+
+// 从主页面立即分类
+async function classifyNowFromMain() {
+    if (!mainApiKeyInput || !mainApiKeyInput.value.trim()) {
+        showMessage('请先输入 Gemini API Key', 'error');
+        return;
+    }
+    
+    if (currentHistory.length === 0) {
+        showMessage('暂无历史记录可分类', 'error');
+        return;
+    }
+    
+    if (typeof window.GeminiClassifier === 'undefined') {
+        showMessage('AI 分类功能未加载，请刷新页面重试', 'error');
+        return;
+    }
+    
+    // 先保存 API Key
+    await saveApiKeyFromMain();
+    
+    // 禁用按钮，显示加载状态
+    classifyNowBtn.disabled = true;
+    classifyNowBtn.innerHTML = '<span class="search-icon">⏳</span>';
+    
+    try {
+        // 获取所有历史记录的标题进行分类
+        const titlesToClassify = currentHistory.map(item => item.title);
+        
+        console.log(`开始从主页面分类 ${titlesToClassify.length} 条历史记录...`);
+        
+        // 调用 Gemini API 进行分类
+        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, mainApiKeyInput.value.trim());
+        
+        if (classificationResult && classificationResult.items) {
+            // 更新历史记录的类别
+            classificationResult.items.forEach((classifiedItem, index) => {
+                if (currentHistory[index]) {
+                    currentHistory[index].category = classifiedItem.category;
+                }
+            });
+            
+            // 标记已经分类过
+            await chrome.storage.local.set({ hasClassified: true });
+            
+            // 更新统计和显示
+            updateStats();
+            applyFilters();
+            
+            console.log('主页面分类完成');
+            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('主页面分类失败:', error);
+        showMessage('AI 分类失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        classifyNowBtn.disabled = false;
+        classifyNowBtn.innerHTML = '<span class="search-icon">🤖</span>';
+    }
+}
+
+// 清除分类标记
+async function clearClassificationMark() {
+    try {
+        await chrome.storage.local.remove(['hasClassified']);
+        showMessage('分类标记已清除，下次加载时将重新分类', 'success');
+    } catch (error) {
+        console.error('清除分类标记失败:', error);
+        showMessage('清除分类标记失败', 'error');
     }
 }
 
@@ -824,6 +1081,25 @@ function exportToJSON(data) {
     }));
     
     downloadFile(JSON.stringify(jsonData, null, 2), 'browser-history.json', 'application/json');
+}
+
+// 导出标题 JSON（用于离线到 Node 端分类）
+function exportTitlesJSON() {
+    try {
+        if (!currentHistory || currentHistory.length === 0) {
+            showMessage('暂无历史记录可导出', 'error');
+            return;
+        }
+        const titles = filteredHistory && filteredHistory.length > 0
+            ? filteredHistory.map(i => i.title)
+            : currentHistory.map(i => i.title);
+        const content = JSON.stringify(titles, null, 2);
+        downloadFile(content, 'history-titles.json', 'application/json');
+        showMessage('已导出标题列表', 'success');
+    } catch (error) {
+        console.error('导出标题失败:', error);
+        showMessage('导出标题失败', 'error');
+    }
 }
 
 function downloadFile(content, filename, mimeType) {

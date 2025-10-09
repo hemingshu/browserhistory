@@ -22,6 +22,10 @@
                         <span class="btn-icon">🔄</span>
                         刷新
                     </button>
+                    <button id="exportTitlesBtn" class="btn btn-secondary">
+                        <span class="btn-icon">📝</span>
+                        导出标题
+                    </button>
                     <button id="exportBtn" class="btn btn-secondary">
                         <span class="btn-icon">📤</span>
                         导出
@@ -41,6 +45,15 @@
                     <input type="text" id="searchInput" placeholder="搜索历史记录..." class="search-input" />
                     <button id="searchBtn" class="search-btn">
                         <span class="search-icon">🔍</span>
+                    </button>
+                </div>
+                <div class="api-key-box" style="margin-top: 10px;">
+                    <input type="password" id="mainApiKeyInput" placeholder="输入 Gemini API Key 启用 AI 分类..." class="search-input" style="flex: 1;" />
+                    <button id="saveApiKeyBtn" class="search-btn" title="保存 API Key">
+                        <span class="search-icon">🔑</span>
+                    </button>
+                    <button id="classifyNowBtn" class="search-btn" title="立即分类" style="margin-left: 5px;">
+                        <span class="search-icon">🤖</span>
                     </button>
                 </div>
                 <div class="filter-container">
@@ -260,6 +273,19 @@
                         <input type="checkbox" id="showFavicon" checked>
                         显示网站图标
                     </label>
+                    <div class="setting-field">
+                        <label for="geminiApiKey" class="setting-label-text">Gemini API Key（仅本机保存）</label>
+                        <input type="password" id="geminiApiKey" placeholder="请输入 Gemini API Key" class="input-text" />
+                        <div class="setting-hint">用于分类时在本机使用，扩展不会将密钥上传至任何服务器。</div>
+                        <button id="classifyBtn" class="btn btn-secondary" style="margin-top: 10px;">
+                            <span class="btn-icon">🤖</span>
+                            使用 AI 重新分类历史记录
+                        </button>
+                        <button id="clearClassificationBtn" class="btn btn-secondary" style="margin-top: 5px;">
+                            <span class="btn-icon">🔄</span>
+                            清除分类标记（下次加载时重新分类）
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -269,6 +295,7 @@
         </div>
     </div>
 
+    <script src="index.js"></script>
     <script src="history.js"></script>
 </body>
 </html>
