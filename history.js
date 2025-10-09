@@ -108,7 +108,23 @@ const translations = {
         apiKeyHint: '用于分类时在本机使用，扩展不会将密钥上传至任何服务器。',
         reclassifyWithAI: '使用 AI 重新分类历史记录',
         clearClassification: '清除分类标记（下次加载时重新分类）',
-        saveSettings: '保存设置'
+        saveSettings: '保存设置',
+        
+        // 历史记录项
+        unstar: '取消标记',
+        star: '标记重要',
+        delete: '删除',
+        visits: '访问 {count} 次',
+        category: '类别: {name}',
+        confirmDelete: '确定要删除这条历史记录吗？',
+        deleteSuccess: '删除成功',
+        deleteFailed: '删除失败',
+        
+        // 时间格式
+        justNow: '刚刚',
+        minutesAgo: '{count}分钟前',
+        hoursAgo: '{count}小时前',
+        daysAgo: '{count}天前'
     },
     en: {
         // 页面标题
@@ -204,7 +220,23 @@ const translations = {
         apiKeyHint: 'Used for classification locally, extension will not upload the key to any server.',
         reclassifyWithAI: 'Reclassify History with AI',
         clearClassification: 'Clear Classification Tags (Reclassify on Next Load)',
-        saveSettings: 'Save Settings'
+        saveSettings: 'Save Settings',
+        
+        // 历史记录项
+        unstar: 'Unstar',
+        star: 'Star',
+        delete: 'Delete',
+        visits: 'Visited {count} times',
+        category: 'Category: {name}',
+        confirmDelete: 'Are you sure you want to delete this history record?',
+        deleteSuccess: 'Delete successful',
+        deleteFailed: 'Delete failed',
+        
+        // 时间格式
+        justNow: 'Just now',
+        minutesAgo: '{count} minutes ago',
+        hoursAgo: '{count} hours ago',
+        daysAgo: '{count} days ago'
     }
 };
 
@@ -938,18 +970,19 @@ function createHistoryItemHTML(item) {
         'other': '📄'
     };
     
+    const t = translations[currentLanguage];
     const categoryNames = {
-        'work': '工作',
-        'entertainment': '娱乐',
-        'shopping': '购物',
-        'news': '资讯',
-        'social': '社交',
-        'auth': '鉴权',
-        'other': '其他'
+        'work': t.work,
+        'entertainment': t.entertainment,
+        'shopping': t.shopping,
+        'news': t.news,
+        'social': t.social,
+        'auth': t.auth,
+        'other': t.all
     };
     
     const categoryIcon = categoryIcons[item.category] || '📄';
-    const categoryName = categoryNames[item.category] || '其他';
+    const categoryName = categoryNames[item.category] || t.all;
     
     return `
         <div class="history-item" data-id="${item.id}" data-category="${item.category}">
@@ -960,10 +993,10 @@ function createHistoryItemHTML(item) {
                 </a>
                 <div class="history-actions">
                     <button class="action-btn star-btn ${item.starred ? 'starred' : ''}" 
-                            data-id="${item.id}" title="${item.starred ? '取消标记' : '标记重要'}">
+                            data-id="${item.id}" title="${item.starred ? t.unstar : t.star}">
                         ${item.starred ? '★' : '☆'}
                     </button>
-                    <button class="action-btn delete-btn" data-id="${item.id}" title="删除">
+                    <button class="action-btn delete-btn" data-id="${item.id}" title="${t.delete}">
                         ×
                     </button>
                 </div>
@@ -971,8 +1004,8 @@ function createHistoryItemHTML(item) {
             <div class="history-url" title="${item.url}">${item.url}</div>
             <div class="history-meta">
                 <span class="history-time">${timeString}</span>
-                <span>访问 ${item.visitCount} 次</span>
-                <span class="history-category" title="类别: ${categoryName}">
+                <span>${t.visits.replace('{count}', item.visitCount)}</span>
+                <span class="history-category" title="${t.category.replace('{name}', categoryName)}">
                     ${categoryIcon} ${categoryName}
                 </span>
                 ${item.tags.length > 0 ? `<div class="history-tags">${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
@@ -1004,7 +1037,8 @@ function addHistoryItemListeners() {
 
 // 删除历史记录项
 async function deleteHistoryItem(id) {
-    if (confirm('确定要删除这条历史记录吗？')) {
+    const t = translations[currentLanguage];
+    if (confirm(t.confirmDelete)) {
         try {
             const item = currentHistory.find(item => item.id === id);
             if (item) {
@@ -1015,11 +1049,11 @@ async function deleteHistoryItem(id) {
                 updateStats();
                 applyFilters();
                 
-                showMessage('删除成功', 'success');
+                showMessage(t.deleteSuccess, 'success');
             }
         } catch (error) {
             console.error('删除失败:', error);
-            showMessage('删除失败', 'error');
+            showMessage(t.deleteFailed, 'error');
         }
     }
 }
@@ -1235,17 +1269,19 @@ function showHelp() {
 function formatTime(date) {
     const now = new Date();
     const diff = now - date;
+    const t = translations[currentLanguage];
     
     if (diff < 60000) { // 1分钟内
-        return '刚刚';
+        return t.justNow;
     } else if (diff < 3600000) { // 1小时内
-        return `${Math.floor(diff / 60000)}分钟前`;
+        return t.minutesAgo.replace('{count}', Math.floor(diff / 60000));
     } else if (diff < 86400000) { // 24小时内
-        return `${Math.floor(diff / 3600000)}小时前`;
+        return t.hoursAgo.replace('{count}', Math.floor(diff / 3600000));
     } else if (diff < 604800000) { // 7天内
-        return `${Math.floor(diff / 86400000)}天前`;
+        return t.daysAgo.replace('{count}', Math.floor(diff / 86400000));
     } else {
-        return date.toLocaleDateString();
+        // 使用当前语言的日期格式
+        return date.toLocaleDateString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US');
     }
 }
 
@@ -1326,6 +1362,8 @@ function toggleLanguage() {
     currentLanguage = currentLanguage === 'zh' ? 'en' : 'zh';
     localStorage.setItem('browserHistoryLanguage', currentLanguage);
     applyLanguage();
+    // 重新渲染历史记录列表以更新语言
+    renderHistory();
 }
 
 function applyLanguage() {
@@ -1338,7 +1376,7 @@ function applyLanguage() {
     
     // 更新语言按钮文本
     if (languageText) {
-        languageText.textContent = currentLanguage === 'zh' ? 'EN' : '中文';
+        languageText.textContent = currentLanguage === 'zh' ? '中文' : 'EN';
     }
     
     // 更新所有带有data-i18n属性的元素
