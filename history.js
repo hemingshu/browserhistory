@@ -570,32 +570,30 @@ async function classifyHistoryWithGemini() {
         //     return;
         // }
         
-        // 获取需要分类的标题（只分类前1000条，避免API调用过长）
+        // 获取需要分类的标题（分块处理，每块20条，支持并发）
         const titlesToClassify = currentHistory.slice(0, 1000).map(item => item.title);
         
         if (titlesToClassify.length === 0) {
             return;
         }
         
-        console.log(`开始使用 Gemini API 分类 ${titlesToClassify.length} 条历史记录...`);
-        
-        // 调用 Gemini API 进行分类
-        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, apiKey);
-        
-        if (classificationResult && classificationResult.items) {
-            // 更新历史记录的类别
-            classificationResult.items.forEach((classifiedItem, index) => {
-                if (currentHistory[index]) {
-                    currentHistory[index].category = classifiedItem.category;
-                }
-            });
-            
-            // 标记已经分类过
-            await chrome.storage.local.set({ hasClassified: true });
-            
-            console.log('Gemini API 分类完成');
-            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
-        }
+        console.log(`开始使用 Gemini API 分类 ${titlesToClassify.length} 条历史记录（分块并发）...`);
+
+        // 分块并发分类
+        const categories = await classifyTitlesInChunks(titlesToClassify, apiKey, 10, 10);
+
+        // 更新历史记录的类别（仅覆盖已分类的条目）
+        categories.forEach((category, index) => {
+            if (typeof category !== 'undefined' && currentHistory[index]) {
+                currentHistory[index].category = category || currentHistory[index].category;
+            }
+        });
+
+        // 标记已经分类过
+        await chrome.storage.local.set({ hasClassified: true });
+
+        console.log('Gemini API 分类完成');
+        showMessage(`已使用 AI 分类 ${categories.filter(Boolean).length} 条历史记录`, 'success');
         
     } catch (error) {
         console.error('Gemini API 分类失败:', error);
@@ -625,32 +623,29 @@ async function handleManualClassification() {
     classifyBtn.innerHTML = '<span class="btn-icon">⏳</span>分类中...';
     
     try {
-        // 获取所有历史记录的标题进行分类
+        // 获取所有历史记录的标题进行分类（分块并发）
         const titlesToClassify = currentHistory.map(item => item.title);
+
+        console.log(`开始手动分类 ${titlesToClassify.length} 条历史记录（分块并发）...`);
+
+        const categories = await classifyTitlesInChunks(titlesToClassify, geminiApiKeyInput.value.trim(), 5, 20);
+
+        // 更新历史记录的类别
+        categories.forEach((category, index) => {
+            if (typeof category !== 'undefined' && currentHistory[index]) {
+                currentHistory[index].category = category || currentHistory[index].category;
+            }
+        });
         
-        console.log(`开始手动分类 ${titlesToClassify.length} 条历史记录...`);
+        // 标记已经分类过
+        await chrome.storage.local.set({ hasClassified: true });
         
-        // 调用 Gemini API 进行分类
-        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, geminiApiKeyInput.value.trim());
+        // 更新统计和显示
+        updateStats();
+        applyFilters();
         
-        if (classificationResult && classificationResult.items) {
-            // 更新历史记录的类别
-            classificationResult.items.forEach((classifiedItem, index) => {
-                if (currentHistory[index]) {
-                    currentHistory[index].category = classifiedItem.category;
-                }
-            });
-            
-            // 标记已经分类过
-            await chrome.storage.local.set({ hasClassified: true });
-            
-            // 更新统计和显示
-            updateStats();
-            applyFilters();
-            
-            console.log('手动分类完成');
-            showMessage(`已使用 AI 重新分类 ${classificationResult.items.length} 条历史记录`, 'success');
-        }
+        console.log('手动分类完成');
+        showMessage(`已使用 AI 重新分类 ${categories.filter(Boolean).length} 条历史记录`, 'success');
         
     } catch (error) {
         console.error('手动分类失败:', error);
@@ -710,32 +705,29 @@ async function classifyNowFromMain() {
     classifyNowBtn.innerHTML = '<span class="search-icon">⏳</span>';
     
     try {
-        // 获取所有历史记录的标题进行分类
+        // 获取所有历史记录的标题进行分类（分块并发）
         const titlesToClassify = currentHistory.map(item => item.title);
+
+        console.log(`开始从主页面分类 ${titlesToClassify.length} 条历史记录（分块并发）...`);
+
+        const categories = await classifyTitlesInChunks(titlesToClassify, mainApiKeyInput.value.trim(), 5, 20);
+
+        // 更新历史记录的类别
+        categories.forEach((category, index) => {
+            if (typeof category !== 'undefined' && currentHistory[index]) {
+                currentHistory[index].category = category || currentHistory[index].category;
+            }
+        });
         
-        console.log(`开始从主页面分类 ${titlesToClassify.length} 条历史记录...`);
+        // 标记已经分类过
+        await chrome.storage.local.set({ hasClassified: true });
         
-        // 调用 Gemini API 进行分类
-        const classificationResult = await window.GeminiClassifier.classifyTitles(titlesToClassify, mainApiKeyInput.value.trim());
+        // 更新统计和显示
+        updateStats();
+        applyFilters();
         
-        if (classificationResult && classificationResult.items) {
-            // 更新历史记录的类别
-            classificationResult.items.forEach((classifiedItem, index) => {
-                if (currentHistory[index]) {
-                    currentHistory[index].category = classifiedItem.category;
-                }
-            });
-            
-            // 标记已经分类过
-            await chrome.storage.local.set({ hasClassified: true });
-            
-            // 更新统计和显示
-            updateStats();
-            applyFilters();
-            
-            console.log('主页面分类完成');
-            showMessage(`已使用 AI 分类 ${classificationResult.items.length} 条历史记录`, 'success');
-        }
+        console.log('主页面分类完成');
+        showMessage(`已使用 AI 分类 ${categories.filter(Boolean).length} 条历史记录`, 'success');
         
     } catch (error) {
         console.error('主页面分类失败:', error);
@@ -1346,6 +1338,7 @@ window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
 });
 
+<<<<<<< Updated upstream
 // 语言切换相关函数
 function initializeLanguage() {
     // 从localStorage加载保存的语言设置
@@ -1446,4 +1439,64 @@ function updateRecordCount() {
     } else {
         recordCountEl.textContent = `Showing ${start}-${end} of ${filteredHistory.length} records`;
     }
+=======
+// 将标题列表按固定大小分块
+function chunkArray(array, chunkSize) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+}
+
+// 有限并发执行器
+async function runWithConcurrency(tasks, concurrency) {
+    const results = new Array(tasks.length);
+    let nextIndex = 0;
+
+    async function worker() {
+        while (true) {
+            const current = nextIndex;
+            if (current >= tasks.length) return;
+            nextIndex++;
+            try {
+                results[current] = await tasks[current]();
+            } catch (e) {
+                results[current] = e;
+            }
+        }
+    }
+
+    const workers = Array.from({ length: Math.max(1, concurrency) }, () => worker());
+    await Promise.all(workers);
+    return results;
+}
+
+// 分块并发分类，返回与输入同长度的类别数组
+async function classifyTitlesInChunks(titles, apiKey, maxConcurrency = 5, chunkSize = 20) {
+    const chunks = chunkArray(titles, chunkSize);
+    const tasks = chunks.map((chunk) => async () => {
+        const res = await window.GeminiClassifier.classifyTitles(chunk, apiKey);
+        // 兼容返回结构：{ items: [{ category }...] }
+        if (res && Array.isArray(res.items)) {
+            return res.items.map(i => i && i.category);
+        }
+        return new Array(chunk.length).fill(undefined);
+    });
+
+    const chunkResults = await runWithConcurrency(tasks, maxConcurrency);
+
+    // 将分块结果拍平为单一数组
+    const flat = [];
+    for (const r of chunkResults) {
+        if (Array.isArray(r)) {
+            flat.push(...r);
+        } else {
+            // 任务失败时，r 可能是错误对象；用 undefined 占位
+            flat.push(undefined);
+        }
+    }
+    // 裁剪到与输入 titles 相同长度
+    return flat.slice(0, titles.length);
+>>>>>>> Stashed changes
 }
