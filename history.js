@@ -1338,7 +1338,6 @@ window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
 });
 
-<<<<<<< Updated upstream
 // 语言切换相关函数
 function initializeLanguage() {
     // 从localStorage加载保存的语言设置
@@ -1439,7 +1438,8 @@ function updateRecordCount() {
     } else {
         recordCountEl.textContent = `Showing ${start}-${end} of ${filteredHistory.length} records`;
     }
-=======
+}
+
 // 将标题列表按固定大小分块
 function chunkArray(array, chunkSize) {
     const chunks = [];
@@ -1498,5 +1498,4 @@ async function classifyTitlesInChunks(titles, apiKey, maxConcurrency = 5, chunkS
     }
     // 裁剪到与输入 titles 相同长度
     return flat.slice(0, titles.length);
->>>>>>> Stashed changes
 }
